@@ -2,6 +2,10 @@
 
 PromBoard 커뮤니티 플러그인 예시입니다. 캔버스에 **사진 효과** 노드 하나를 더합니다. 사진을 이으면 고른 효과를 입혀 PNG 로 내보냅니다.
 
+![같은 공원 사진을 여섯 조각으로 나눠 원본과 효과 다섯 가지(세기 보통)를 나란히 보인 그림](docs/ko/hero.jpg)
+
+한 장의 사진을 세로 여섯 조각으로 나눠, 맨 왼쪽은 원본 그대로 두고 나머지는 효과를 하나씩 입혔습니다(세기 보통).
+
 - 플러그인 id: `promboard.photo-effects`
 - AI 모델을 받지 않습니다. 그래픽카드 없이 CPU 로 돕니다(파이썬 Pillow · numpy).
 - 긴 변이 2560px 를 넘는 사진은 2560px 로 줄여서 처리합니다. 투명한 부분은 그대로 둡니다.
@@ -16,7 +20,13 @@ PromBoard 커뮤니티 플러그인 예시입니다. 캔버스에 **사진 효�
 | 망점 인쇄 | 잡지 인쇄 같은 색 점 | 점 크기 |
 | 유화 | 붓으로 칠한 듯한 색 덩어리 | 붓 터치 크기 |
 
-노드 위 손잡이를 끌면 원본과 결과를 나란히 견줘 볼 수 있습니다.
+![효과 다섯 가지를 약하게 · 보통 · 강하게로 입힌 결과를 얼굴 쪽만 잘라 견준 표](docs/ko/strength.jpg)
+
+노드 위 손잡이를 끌면 원본과 결과를 나란히 견줘 볼 수 있습니다. 아래 움짤은 손잡이를 끌 때처럼 왼쪽은 원본, 오른쪽은 효과를 입힌 결과로 나눠 보여 줍니다.
+
+![책상 사진에서 손잡이를 좌우로 끌며 원본과 효과 다섯 가지를 차례로 견주는 움짤](docs/ko/compare.gif)
+
+예시 사진은 GPT Image 2.5 로 만든 사진(Ultralytics YOLO 예시 플러그인의 예제 사진과 같음)이고, 결과는 이 저장소의 `nodes/main.py` 를 그대로 돌려 얻었습니다.
 
 ## 설치
 
@@ -33,17 +43,22 @@ icon.png
 nodes/main.py            NODES = {"photo-effect": 함수}
 nodes/requirements.in    받을 패키지(사람이 고치는 파일)
 nodes/requirements-*.txt 운영체제별 해시 잠금 파일(만든 파일)
+docs/                    이 README 의 그림(ko · en). 플러그인 zip 에는 넣지 않는다
 ```
 
 - 잠금 파일 다시 만들기(운영체제마다 `--python-platform` 을 바꿔서):
   `uv pip compile nodes/requirements.in --generate-hashes --python-version 3.12 --python-platform x86_64-pc-windows-msvc --index-url https://pypi.org/simple -o nodes/requirements-win.txt`
-- 레지스트리에 올리는 zip · 등록 항목은 PromBoard 앱 저장소의 `server/src/tools/packPlugin.ts` 로 만듭니다.
+- 레지스트리에 올리는 zip · 등록 항목은 PromBoard 앱 저장소의 `server/src/tools/packPlugin.ts` 로 만듭니다. `packPlugin.ts` 는 넘겨받은 폴더를 통째로 묶으므로 `git archive HEAD` 로 꺼낸 폴더를 넘깁니다. `.gitattributes` 의 `export-ignore` 로 `docs/` 가 빠집니다.
 
 ---
 
 ## English
 
 A PromBoard community plugin example. It adds one **Photo Effect** node to the canvas: connect a photo and it outputs a PNG with the chosen effect.
+
+![One park photo cut into six strips: the original and the five effects at medium strength](docs/en/hero.jpg)
+
+One photo cut into six vertical strips: the leftmost strip is the original, the others each have one effect applied (medium strength).
 
 - Plugin id: `promboard.photo-effects`
 - No AI model download. Runs on the CPU without a graphics card (Python Pillow + numpy).
@@ -57,7 +72,13 @@ A PromBoard community plugin example. It adds one **Photo Effect** node to the c
 | Halftone print (망점 인쇄) | magazine-style color dots | dot size |
 | Oil paint (유화) | painterly color patches | brush size |
 
-Drag the handle on the node to compare the original and the result.
+![The five effects at low, medium and high strength, cropped to the faces](docs/en/strength.jpg)
+
+Drag the handle on the node to compare the original and the result. The animation below splits the picture the same way: original on the left, result on the right.
+
+![Dragging a handle across a desk photo to compare the original with each of the five effects](docs/en/compare.gif)
+
+The example photos were made with GPT Image 2.5 (the same photos as in the Ultralytics YOLO example plugin). The results come from running this repository's `nodes/main.py` as is.
 
 **Install**: PromBoard → Plugin Manager → **Community plugins** → Browse → install "사진 효과 모음" (Photo Effects). Turn off **Restricted mode** and enable the plugin. The first run prepares Python with Pillow and numpy (once). Then right-click an empty spot on the canvas: **사진 효과** (Photo Effect) is in the plugin group at the bottom of the menu. Connect an image node or source image to its input, pick the effect and strength pills, and press ▷.
 
