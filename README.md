@@ -22,9 +22,9 @@ PromBoard 커뮤니티 플러그인 예시입니다. 캔버스에 **사진 효�
 
 ![효과 다섯 가지를 약하게 · 보통 · 강하게로 입힌 결과를 얼굴 쪽만 잘라 견준 표](docs/ko/strength.jpg)
 
-노드 위 손잡이를 끌면 원본과 결과를 나란히 견줘 볼 수 있습니다. 아래 움짤은 손잡이를 끌 때처럼 왼쪽은 원본, 오른쪽은 효과를 입힌 결과로 나눠 보여 줍니다.
+노드 위 손잡이를 끌면 원본과 결과를 나란히 견줘 볼 수 있습니다. 아래 움짤은 손잡이를 끌 때처럼 왼쪽은 원본, 오른쪽은 효과를 입힌 결과로 나눠 보여 줍니다. 효과는 픽셀아트 → 연필 스케치 → 듀오톤 → 망점 인쇄 → 유화 차례로 바뀝니다(세기 보통).
 
-![책상 사진에서 손잡이를 좌우로 끌며 원본과 효과 다섯 가지를 차례로 견주는 움짤](docs/ko/compare.gif)
+![책상 사진에서 손잡이를 좌우로 끌며 원본과 효과 다섯 가지를 차례로 견주는 움짤](docs/compare.gif)
 
 예시 사진은 GPT Image 2.5 로 만든 사진(Ultralytics YOLO 예시 플러그인의 예제 사진과 같음)이고, 결과는 이 저장소의 `nodes/main.py` 를 그대로 돌려 얻었습니다.
 
@@ -45,12 +45,14 @@ nodes/requirements.in    받을 패키지(사람이 고치는 파일)
 nodes/requirements-*.txt 운영체제별 해시 잠금 파일(만든 파일)
 NOTICE                   망점 인쇄 코드의 원본(Paper Shaders, Apache-2.0) · 연필 스케치 출처
 LICENSE-APACHE           Apache-2.0 전문(망점 인쇄 코드)
-docs/                    이 README 의 그림(ko · en). 플러그인 zip 에는 넣지 않는다
+docs/                    이 README 의 그림(ko · en, 움짤은 두 언어 공용). 플러그인 zip 에는 넣지 않는다
+docs/scripts/            위 그림을 nodes/main.py 로 다시 만드는 스크립트(make_results.py → make_visuals.py)
 ```
 
 - 잠금 파일 다시 만들기(운영체제마다 `--python-platform` 을 바꿔서):
   `uv pip compile nodes/requirements.in --generate-hashes --python-version 3.12 --python-platform x86_64-pc-windows-msvc --index-url https://pypi.org/simple -o nodes/requirements-win.txt`
 - 레지스트리에 올리는 zip · 등록 항목은 PromBoard 앱 저장소의 `server/src/tools/packPlugin.ts` 로 만듭니다. `packPlugin.ts` 는 넘겨받은 폴더를 통째로 묶으므로 `git archive HEAD` 로 꺼낸 폴더를 넘깁니다. `.gitattributes` 의 `export-ignore` 로 `docs/` 가 빠집니다.
+- README 그림 다시 만들기(저장소 루트에서, 잠금 파일 패키지 · ffmpeg · Pretendard 글꼴이 있는 파이썬): `python docs/scripts/make_results.py <작업 폴더> && python docs/scripts/make_visuals.py <작업 폴더> docs ko && python docs/scripts/make_visuals.py <작업 폴더> docs en hero,strength` — 예제 사진은 YOLO 예시 플러그인 저장소에서 처음 한 번 받습니다. 효과를 고치면 같은 명령으로 같은 파일 이름에 다시 만들어 함께 올립니다.
 
 ---
 
@@ -76,11 +78,11 @@ One photo cut into six vertical strips: the leftmost strip is the original, the 
 
 ![The five effects at low, medium and high strength, cropped to the faces](docs/en/strength.jpg)
 
-Drag the handle on the node to compare the original and the result. The animation below splits the picture the same way: original on the left, result on the right.
+Drag the handle on the node to compare the original and the result. The animation below splits the picture the same way: original on the left, result on the right, going through Pixel art → Pencil sketch → Duotone → Halftone print → Oil paint (medium strength).
 
-![Dragging a handle across a desk photo to compare the original with each of the five effects](docs/en/compare.gif)
+![Dragging a handle across a desk photo to compare the original with each of the five effects](docs/compare.gif)
 
-The example photos were made with GPT Image 2.5 (the same photos as in the Ultralytics YOLO example plugin). The results come from running this repository's `nodes/main.py` as is.
+The example photos were made with GPT Image 2.5 (the same photos as in the Ultralytics YOLO example plugin). The results come from running this repository's `nodes/main.py` as is; `docs/scripts/` rebuilds every picture: `python docs/scripts/make_results.py <work dir> && python docs/scripts/make_visuals.py <work dir> docs en` (repository root, a Python with the lock-file packages, ffmpeg and the Pretendard font).
 
 **Install**: PromBoard → Plugin Manager → **Community plugins** → Browse → install "사진 효과 모음" (Photo Effects). Turn off **Restricted mode** and enable the plugin. The first run prepares Python with Pillow and numpy (once). Then right-click an empty spot on the canvas: **사진 효과** (Photo Effect) is in the plugin group at the bottom of the menu. Connect an image node or source image to its input, pick the effect and strength pills, and press ▷.
 
