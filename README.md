@@ -23,7 +23,7 @@ PromBoard 커뮤니티 플러그인 예시입니다. 캔버스에 **사진 효�
 1. PromBoard 앱 → 플러그인 매니저 → **커뮤니티 플러그인** → 둘러보기에서 「사진 효과 모음」을 설치합니다.
 2. 코드가 든 플러그인이라 **제한 모드**를 끄고 플러그인을 켭니다.
 3. 처음 실행할 때 실행 준비가 파이썬과 Pillow · numpy 를 받습니다(한 번만).
-4. 캔버스에서 노드 추가 → 플러그인 → **사진 효과**. 이미지 노드나 소스 이미지를 왼쪽 입력에 잇고 ▷ 를 누릅니다.
+4. 캔버스 빈 곳을 우클릭하면 메뉴 맨 아래 플러그인 묶음에 **사진 효과**가 있습니다. 이미지 노드나 소스 이미지를 왼쪽 입력에 잇고, 노드를 골라 효과 · 세기 알약을 정한 뒤 ▷ 를 누릅니다.
 
 ## 플러그인 만드는 사람을 위한 메모
 
@@ -59,7 +59,7 @@ A PromBoard community plugin example. It adds one **Photo Effect** node to the c
 
 Drag the handle on the node to compare the original and the result.
 
-**Install**: PromBoard → Plugin Manager → **Community plugins** → Browse → install "사진 효과 모음" (Photo Effects). Turn off **Restricted mode** and enable the plugin. The first run prepares Python with Pillow and numpy (once). Then add the node from Add node → Plugins → **사진 효과** (Photo Effect).
+**Install**: PromBoard → Plugin Manager → **Community plugins** → Browse → install "사진 효과 모음" (Photo Effects). Turn off **Restricted mode** and enable the plugin. The first run prepares Python with Pillow and numpy (once). Then right-click an empty spot on the canvas: **사진 효과** (Photo Effect) is in the plugin group at the bottom of the menu. Connect an image node or source image to its input, pick the effect and strength pills, and press ▷.
 
 The plugin texts in the app are Korean only for now — the plugin manifest takes a single language.
 
