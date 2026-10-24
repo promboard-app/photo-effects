@@ -1,0 +1,23 @@
+Photo Effects (promboard.photo-effects)
+Copyright (c) 2026 PromBoard. Licensed under the MIT License (see LICENSE),
+except for the part listed below.
+
+Halftone print effect (the `halftone` function and `HALFTONE_INKS` in nodes/main.py)
+------------------------------------------------------------------------------------
+This part is a NumPy port of the "Halftone CMYK" shader from Paper Shaders
+(packages/shaders/src/shaders/halftone-cmyk.ts, commit 7002061d, Vintage preset):
+  https://github.com/paper-design/shaders
+It is licensed under the Apache License, Version 2.0 (full text: LICENSE-APACHE).
+Changes from the original: GLSL rewritten in NumPy for still images; contrast 1.25 -> 1.1
+and ink amount raised to the power 0.85 so mid tones stay closer to the photo; dot size set
+by cell count along the long side; grain made from pixel-scaled value noise; dot profile
+precomputed as a lookup table; computed in row strips.
+
+Paper Shaders NOTICE:
+  Powered by Paper Shaders:
+  https://shaders.paper.design
+
+Pencil sketch effect
+--------------------
+Written from the published method in Cewu Lu, Li Xu, Jiaya Jia, "Combining Sketch and Tone
+for Pencil Drawing Production", NPAR 2012. No code was copied from other implementations.

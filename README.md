@@ -15,9 +15,9 @@ PromBoard 커뮤니티 플러그인 예시입니다. 캔버스에 **사진 효�
 | 효과 | 바꾸는 모양 | 세기(약하게 · 보통 · 강하게)가 바꾸는 것 |
 |---|---|---|
 | 픽셀아트 | 큰 네모 칸과 적은 색 | 칸 크기 |
-| 연필 스케치 | 종이 위 연필 선 | 선 굵기 · 진하기 |
+| 연필 스케치 | 종이 위 연필 선과 빗금 명암 | 선 굵기 · 진하기 |
 | 듀오톤 | 보라 · 살구 두 색 | 두 색을 입히는 정도 |
-| 망점 인쇄 | 잡지 인쇄 같은 색 점 | 점 크기 |
+| 망점 인쇄 | 오래된 잡지 인쇄처럼 네 가지 잉크 색 점 | 점 크기 |
 | 유화 | 붓으로 칠한 듯한 색 덩어리 | 붓 터치 크기 |
 
 ![효과 다섯 가지를 약하게 · 보통 · 강하게로 입힌 결과를 얼굴 쪽만 잘라 견준 표](docs/ko/strength.jpg)
@@ -43,6 +43,8 @@ icon.png
 nodes/main.py            NODES = {"photo-effect": 함수}
 nodes/requirements.in    받을 패키지(사람이 고치는 파일)
 nodes/requirements-*.txt 운영체제별 해시 잠금 파일(만든 파일)
+NOTICE                   망점 인쇄 코드의 원본(Paper Shaders, Apache-2.0) · 연필 스케치 출처
+LICENSE-APACHE           Apache-2.0 전문(망점 인쇄 코드)
 docs/                    이 README 의 그림(ko · en). 플러그인 zip 에는 넣지 않는다
 ```
 
@@ -67,9 +69,9 @@ One photo cut into six vertical strips: the leftmost strip is the original, the 
 | Effect | Look | Strength (low · medium · high) controls |
 |---|---|---|
 | Pixel art (픽셀아트) | big square cells, few colors | cell size |
-| Pencil sketch (연필 스케치) | pencil lines on paper | line width and darkness |
+| Pencil sketch (연필 스케치) | pencil lines and hatched shading on paper | line width and darkness |
 | Duotone (듀오톤) | purple and apricot | how much of the two colors is applied |
-| Halftone print (망점 인쇄) | magazine-style color dots | dot size |
+| Halftone print (망점 인쇄) | vintage-magazine dots in four ink colors | dot size |
 | Oil paint (유화) | painterly color patches | brush size |
 
 ![The five effects at low, medium and high strength, cropped to the faces](docs/en/strength.jpg)
@@ -87,3 +89,6 @@ The plugin texts in the app are Korean only for now — the plugin manifest take
 ## License
 
 MIT — see [LICENSE](LICENSE). Pillow (MIT-CMU) and numpy (BSD-3-Clause) are installed from PyPI at prepare time and are not bundled.
+
+- Halftone print is a NumPy port of the [Paper Shaders](https://github.com/paper-design/shaders) "Halftone CMYK" shader (Vintage preset), Apache-2.0 — see [NOTICE](NOTICE) and [LICENSE-APACHE](LICENSE-APACHE).
+- Pencil sketch follows Cewu Lu, Li Xu, Jiaya Jia, "Combining Sketch and Tone for Pencil Drawing Production" (NPAR 2012), written from the paper.

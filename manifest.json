@@ -1,11 +1,11 @@
 {
   "schema": 1,
   "id": "promboard.photo-effects",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "name": "사진 효과 모음",
   "description": "사진 한 장에 그림 같은 효과를 입힌다. 픽셀아트 · 연필 스케치 · 듀오톤 · 망점 인쇄 · 유화 다섯 가지 중에서 고르고, 세기를 약하게 · 보통 · 강하게 중에서 고른다. AI 모델을 받지 않고 그래픽카드 없이 CPU 로 돈다. 처음 실행 준비 때 Pillow · numpy 를 받는다(파이썬이 없는 PC 는 파이썬도). 긴 변이 2560px 를 넘는 사진은 2560px 로 줄여서 처리한다. 투명한 부분은 그대로 둔다.",
   "author": "PromBoard",
-  "license": "MIT",
+  "license": "MIT AND Apache-2.0",
   "app": ">=1.0.1",
   "repository": "https://github.com/promboard-app/photo-effects",
   "icon": "icon.png",
@@ -27,7 +27,7 @@
         {
           "id": "effect",
           "label": "효과",
-          "help": "픽셀아트는 큰 네모 칸과 적은 색으로, 연필 스케치는 종이 위 연필 선으로, 듀오톤은 보라 · 살구 두 색으로, 망점 인쇄는 잡지 인쇄 같은 색 점으로, 유화는 붓으로 칠한 듯한 색 덩어리로 바꾼다.",
+          "help": "픽셀아트는 큰 네모 칸과 적은 색으로, 연필 스케치는 종이 위 연필 선과 빗금 명암으로, 듀오톤은 보라 · 살구 두 색으로, 망점 인쇄는 오래된 잡지 인쇄처럼 네 가지 잉크 색 점으로, 유화는 붓으로 칠한 듯한 색 덩어리로 바꾼다.",
           "type": "select",
           "options": [
             { "value": "pixel", "label": "픽셀아트" },
