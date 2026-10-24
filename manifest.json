@@ -1,0 +1,68 @@
+{
+  "schema": 1,
+  "id": "promboard.photo-effects",
+  "version": "1.0.0",
+  "name": "사진 효과 모음",
+  "description": "사진 한 장에 그림 같은 효과를 입힌다. 픽셀아트 · 연필 스케치 · 듀오톤 · 망점 인쇄 · 유화 다섯 가지 중에서 고르고, 세기를 약하게 · 보통 · 강하게 중에서 고른다. AI 모델을 받지 않고 그래픽카드 없이 CPU 로 바로 돈다(Pillow · numpy, 처음 준비 때 약 30MB 를 받는다). 긴 변이 2560px 를 넘는 사진은 2560px 로 줄여서 처리한다. 투명한 부분은 그대로 둔다.",
+  "author": "PromBoard",
+  "license": "MIT",
+  "app": ">=1.0.1",
+  "repository": "https://github.com/promboard-app/photo-effects",
+  "icon": "icon.png",
+  "contents": ["nodes"],
+  "nodes": [
+    {
+      "id": "photo-effect",
+      "label": "사진 효과",
+      "description": "연결한 사진에 고른 효과를 입혀 PNG 로 내보낸다. 노드 위 손잡이를 끌면 원본과 나란히 견줘 볼 수 있다.",
+      "layout": "single",
+      "views": ["compare"],
+      "inputs": [
+        { "id": "image", "type": "image", "label": "사진", "required": true }
+      ],
+      "outputs": [
+        { "id": "image", "type": "image", "label": "효과 입힌 사진" }
+      ],
+      "settings": [
+        {
+          "id": "effect",
+          "label": "효과",
+          "help": "픽셀아트는 큰 네모 칸과 적은 색으로, 연필 스케치는 종이 위 연필 선으로, 듀오톤은 보라 · 살구 두 색으로, 망점 인쇄는 잡지 인쇄 같은 색 점으로, 유화는 붓으로 칠한 듯한 색 덩어리로 바꾼다.",
+          "type": "select",
+          "options": [
+            { "value": "pixel", "label": "픽셀아트" },
+            { "value": "sketch", "label": "연필 스케치" },
+            { "value": "duotone", "label": "듀오톤" },
+            { "value": "halftone", "label": "망점 인쇄" },
+            { "value": "oil", "label": "유화" }
+          ],
+          "default": "pixel"
+        },
+        {
+          "id": "strength",
+          "label": "세기",
+          "help": "효과마다 바뀌는 것이 다르다. 픽셀아트는 칸 크기, 연필 스케치는 선 굵기와 진하기, 듀오톤은 두 색을 입히는 정도, 망점 인쇄는 점 크기, 유화는 붓 터치 크기다.",
+          "type": "select",
+          "options": [
+            { "value": "low", "label": "약하게" },
+            { "value": "medium", "label": "보통" },
+            { "value": "high", "label": "강하게" }
+          ],
+          "default": "medium"
+        }
+      ]
+    }
+  ],
+  "python": {
+    "version": "3.12",
+    "torch": "none",
+    "lock": {
+      "win": "nodes/requirements-win.txt",
+      "linux": "nodes/requirements-linux.txt",
+      "mac": "nodes/requirements-mac.txt"
+    },
+    "entry": "nodes.main"
+  },
+  "gpu": { "vramMinMb": 0, "cpuAllowed": true },
+  "permissions": {}
+}
