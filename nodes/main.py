@@ -4,14 +4,15 @@
 AI 모델 없이 Pillow · numpy 만 쓰고 CPU 로 돈다.
 노드 코드 약속(NODES · ctx · 입출력 모양)은 PromBoard docs/Scrum4/02_스키마-v0.md §6.
 
-효과 5가지(설정 effect)와 세기 3단계(설정 strength: low · medium · high → 0 · 1 · 2)
+효과 6가지(설정 effect)와 세기 3단계(설정 strength: low · medium · high → 0 · 1 · 2)
   pixel     픽셀아트      세기 = 칸 크기(칸 수 128 · 80 · 48, 색 32 · 24 · 16)
   sketch    연필 스케치    세기 = 선 굵기 · 진하기(Lu · Xu · Jia 2012 연필화 방식 + 색 닷지 선)
   duotone   듀오톤        세기 = 두 색을 입히는 정도(원본과 섞는 비율)
-  halftone  망점 인쇄      세기 = 점 크기(칸 수 160 · 110 · 72, Paper Shaders Halftone CMYK 를 옮긴 것)
+  halftone  망점 인쇄      세기 = 점 크기(칸 수 150 · 105 · 70, glsl-halftone 을 옮긴 것)
+  stipple   잉크 점묘      세기 = 점 크기를 조금(칸 수 184 · 160 · 139, Paper Shaders Halftone CMYK 를 옮긴 것)
   oil       유화          세기 = 붓 터치 크기(쿠와하라 필터 반지름 4 · 7 · 11, 긴 변 1024px 기준)
 투명한 부분(알파)은 그대로 둔다. 원본이 불투명하면 RGB PNG 로 저장한다.
-망점 인쇄 코드의 원본 · 라이선스(Apache-2.0)는 저장소의 NOTICE.
+망점 인쇄 · 잉크 점묘 코드의 원본 · 라이선스(MIT · Apache-2.0)는 저장소의 NOTICE.
 """
 
 # 긴 변이 이보다 크면 줄여서 처리한다(메모리 · 시간 상한). manifest 설명과 같아야 한다.
@@ -232,15 +233,112 @@ def duotone(ctx, rgba, level):
     return _to_image(orig * (1.0 - mix) + duo * mix)
 
 
-# 망점 잉크 네 판 — (이름, 격자 각도°, 격자 밀기, 잉크 색, 점 크기에 더하는 값, 점 크기에 비례해 키우는 값).
+def _simplex2(x, y):
+    """2D 심플렉스 노이즈(값 약 −1~1) — Ashima Arts webgl-noise 의 snoise(glsl-noise simplex/2d, MIT, NOTICE)를 옮긴 것.
+
+    격자 해시(mod 289 순열)는 원본에서도 정수 값이라 int32 로 같은 값을 구한다(float 나머지 연산보다 빠르다).
+    """
+    import numpy as np
+
+    c0, c2 = np.float32(0.211324865405187), np.float32(-0.577350269189626)
+    s = (x + y) * np.float32(0.366025403784439)
+    fx, fy = np.floor(x + s), np.floor(y + s)
+    t = (fx + fy) * c0
+    x0, y0 = x - fx + t, y - fy + t
+    ix = np.mod(fx, 289.0).astype(np.int32)
+    iy = np.mod(fy, 289.0).astype(np.int32)
+    del s, fx, fy, t
+    first = x0 > y0
+    i1x = first.astype(np.int32)
+    i1y = 1 - i1x
+    corners = (
+        (x0, y0, 0, 0),
+        (x0 + c0 - first, y0 + c0 - (~first), i1x, i1y),
+        (x0 + c2, y0 + c2, 1, 1),
+    )
+    out = np.zeros_like(x)
+    for cx, cy, ox, oy in corners:
+        p = iy + oy
+        p = (p * 34 + 1) * p % 289 + ix + ox
+        p = (p * 34 + 1) * p % 289
+        m = np.maximum(np.float32(0.5) - (cx * cx + cy * cy), np.float32(0.0))
+        m *= m
+        m *= m
+        g = (p % 41).astype(np.float32) * np.float32(2.0 / 41.0) - np.float32(1.0)  # 2·fract(p/41) − 1
+        hh = np.abs(g) - np.float32(0.5)
+        a0 = g - np.floor(g + np.float32(0.5))
+        m *= np.float32(1.79284291400159) - np.float32(0.85373472095314) * (a0 * a0 + hh * hh)
+        out += m * (a0 * cx + hh * cy)
+    return np.float32(130.0) * out
+
+
+# 망점 판 — (격자 행렬 a · b · c · d: u = a·x + b·y, v = c·x + d·y). glsl-halftone 의 K 45° · C 15° · M −15° · Y 0°.
+HALFTONE_SCREENS = {
+    "k": (0.707, 0.707, -0.707, 0.707),
+    "c": (0.966, 0.259, -0.259, 0.966),
+    "m": (0.966, -0.259, 0.259, 0.966),
+    "y": (1.0, 0.0, 0.0, 1.0),
+}
+
+
+def halftone(ctx, rgba, level):
+    """CMYK 망점 — glsl-halftone(Stefan Gustavson 의 WebGL 망점 셰이더를 옮긴 것, MIT, NOTICE)을 numpy 로 옮겼다.
+
+    색을 대략 CMYK 로 나눠(K = C · M · Y 중 가장 작은 값, 셋에서 K 를 뺀다) 판마다 각도가 다른 점 격자를 둔다.
+    점 반지름은 잉크 양의 제곱근(점 넓이가 잉크 양에 비례), 가장자리는 픽셀 한 칸 폭만 부드럽게 해(aastep) 계단 없이
+    매끈하다. 심플렉스 노이즈 세 겹을 점 가장자리와 종이 · 잉크 색에 섞어 인쇄물처럼 거칠게 한다.
+    고친 점: 점 반지름을 √(4/π) ≈ 1.128 배 해 점 넓이가 잉크 양과 같게 했다(원본 √잉크 는 넓이가 π/4 배라 사진이 옅다 —
+    회색 단계 평균 밝기 오차 0.19 → 0.12, PM 2026-10-25 B안). 점 크기는 긴 변 칸 수(150 · 105 · 70)로 정하고(원본은 그림
+    높이 1 당 30칸), 픽셀 미분(dFdx · dFdy)은 잉크 · 노이즈 쪽만 이웃 픽셀 차이로 구하고 격자 거리 쪽은 식으로 더해
+    칸 경계에 줄이 생기지 않게 했다.
+    """
+    import numpy as np
+
+    w, h = rgba.size
+    freq = np.float32((150, 105, 70)[level] * h / max(w, h))  # 그림 높이 1 당 칸 수
+    rgb = np.asarray(rgba.convert("RGB"), dtype=np.float32) / 255.0
+    ys, xs = np.mgrid[0:h, 0:w].astype(np.float32)
+    sx = (xs + np.float32(0.5)) / np.float32(h)  # 원본 좌표 — 그림 높이를 1 로, 아래에서 위로
+    sy = (np.float32(h - 0.5) - ys) / np.float32(h)
+    del xs, ys
+    n = np.float32(0.1) * _simplex2(sx * np.float32(200.0), sy * np.float32(200.0))
+    n += np.float32(0.05) * _simplex2(sx * np.float32(400.0), sy * np.float32(400.0))
+    n += np.float32(0.025) * _simplex2(sx * np.float32(800.0), sy * np.float32(800.0))
+    ctx.check_cancel()
+    ctx.progress(0.4, "halftone")
+    cmy = 1.0 - rgb
+    ink = {"k": cmy.min(axis=2)}
+    for i, name in enumerate("cmy"):
+        ink[name] = cmy[..., i] - ink["k"]
+    ring = np.float32(2.0 * freq / h)  # 격자 거리 length(uv) 가 픽셀 하나에 바뀌는 양
+    dots = {}
+    for name, (a, b, c, d) in HALFTONE_SCREENS.items():
+        ctx.check_cancel()
+        u = (a * sx + b * sy) * freq
+        v = (c * sx + d * sy) * freq
+        u = 2.0 * (u - np.floor(u)) - 1.0  # 2·fract − 1
+        v = 2.0 * (v - np.floor(v)) - 1.0
+        base = np.float32(1.128) * np.sqrt(np.maximum(ink[name], 0.0)) + n  # 1.128 = √(4/π): 점 넓이 = 잉크 양
+        value = base - np.sqrt(u * u + v * v)
+        gx = np.diff(base, axis=1, append=base[:, -1:])
+        gy = np.diff(base, axis=0, append=base[-1:, :])
+        width = np.sqrt(gx * gx + gy * gy + ring * ring) * np.float32(0.70710678)
+        dots[name] = _smoothstep(-width, width, value)
+    screen = 1.0 - 0.9 * np.stack([dots["c"], dots["m"], dots["y"]], axis=2) + n[..., None]
+    black = (n + 0.1)[..., None]
+    t = (0.85 * dots["k"] + 0.3 * n)[..., None]
+    return _to_image((screen + (black - screen) * t) * 255.0)
+
+
+# 잉크 점묘 잉크 네 판 — (이름, 격자 각도°, 격자 밀기, 잉크 색, 점 크기에 더하는 값, 점 크기에 비례해 키우는 값).
 # 칠하는 순서 K · C · M · Y. 값은 Paper Shaders Halftone CMYK 의 Vintage 프리셋.
-HALFTONE_INKS = (
+STIPPLE_INKS = (
     ("k", 45.0, 0.0, (0x2D, 0x28, 0x24), 0.0, 0.0),
     ("c", 15.0, -0.5, (0x59, 0xAF, 0xC5), 0.15, 0.3),
     ("m", 75.0, -0.25, (0xD8, 0x69, 0x7C), 0.0, 0.0),
     ("y", 0.0, 0.2, (0xFA, 0xD8, 0x5C), 0.0, 0.2),
 )
-HALFTONE_PAPER = (0xFF, 0xFA, 0xF0)
+STIPPLE_PAPER = (0xFF, 0xFA, 0xF0)
 
 
 def _dot_profile(n=4096):
@@ -251,13 +349,14 @@ def _dot_profile(n=4096):
     return ((1.0 - t * t * (3.0 - 2.0 * t)) ** 1.2).astype(np.float32)
 
 
-def halftone(ctx, rgba, level):
-    """CMYK 망점 — 잉크 네 판을 각도가 다른 점 격자로 찍어 오래된 잡지 인쇄처럼 만든다.
+def ink_stipple(ctx, rgba, level):
+    """잉크 점묘 — 바랜 잉크 네 판을 각도가 다른 점 격자로 찍어 오래된 잡지 인쇄처럼 만든다.
 
     Paper Shaders 「Halftone CMYK」 셰이더(Apache-2.0, NOTICE)를 numpy 로 옮겼다. 그 셰이더의 Vintage 프리셋과 같은
     sharp 방식이다. 픽셀마다 둘레 3×3 칸의 점을 가운데서 가장자리로 흐려지는 원으로 더한 뒤 문턱을 걸어, 가까운 점은
     잉크처럼 이어지고 가장자리는 매끈해진다. 점 크기는 그 픽셀 색에서 읽어 점이 사진 윤곽을 따라 잘린다.
     칸 가운데를 조금씩 흔들고(격자 흔들림), 잔 낟알로 점 가장자리와 종이를 거칠게 한다.
+    세기는 점 크기를 조금씩만 바꾼다(긴 변 칸 수 184 · 160 · 139, 보통 = 1.1.0 망점 인쇄의 '약하게').
     고친 점: 대비를 1.25 에서 1.1 로 낮추고 잉크 양을 0.85제곱해 밝은 · 중간 톤이 덜 날아가게 했다(회색 단계 평균
     밝기 오차 0.09 → 0.06). 점 크기는 칸 수(긴 변 기준)로 정하고, 낟알은 픽셀 크기에 맞춘 값 노이즈로 바꾸고,
     점 모양 계산은 표로 미리 구하고, 메모리 안에서 빨리 돌도록 줄 묶음(띠)으로 나눠 계산한다.
@@ -266,7 +365,7 @@ def halftone(ctx, rgba, level):
     from PIL import Image
 
     w, h = rgba.size
-    cell = max(4.0, max(w, h) / (160, 110, 72)[level])  # 칸 한 변(px)
+    cell = max(4.0, max(w, h) / (184, 160, 139)[level])  # 칸 한 변(px)
     contrast, softness, grid_noise, grain_mixer, grain_overlay = 1.1, 0.4, 0.45, 0.15, 0.1
     arr = np.asarray(rgba, dtype=np.float32) / 255.0
     rgb = np.clip((arr[..., :3] - 0.5) * contrast + 0.5, 0.0, 1.0)
@@ -288,7 +387,7 @@ def halftone(ctx, rgba, level):
     corner_x = np.array([xs[0], xs[-1], xs[0], xs[-1]])
     corner_y = np.array([y_ends[0], y_ends[0], y_ends[1], y_ends[1]])
     plates = []
-    for name, angle, shift, color, flood, gain in HALFTONE_INKS:
+    for name, angle, shift, color, flood, gain in STIPPLE_INKS:
         a = np.deg2rad(angle)
         ca, sa = np.float32(np.cos(a)), np.float32(np.sin(a))
         cu = ca * corner_x - sa * corner_y + shift
@@ -304,7 +403,7 @@ def halftone(ctx, rgba, level):
         plates.append((ca, sa, shift, i0, j0, nj, jitter_u, jitter_v, r, absorb))
     del amount, rgb, top, lit, shrink
 
-    paper = np.array(HALFTONE_PAPER, dtype=np.float32) / 255.0
+    paper = np.array(STIPPLE_PAPER, dtype=np.float32) / 255.0
     out = np.empty((h, w, 3), dtype=np.float32)
     for y0 in range(0, h, 64):
         ctx.check_cancel()
@@ -338,7 +437,7 @@ def halftone(ctx, rgba, level):
             ink *= 1.0 - cover[..., None] * absorb
             np.maximum(shape, cover, out=shape)
         out[y0:y1] = paper + (ink - paper) * shape[..., None]
-        ctx.progress(0.25 + 0.6 * y1 / h, "halftone")
+        ctx.progress(0.25 + 0.6 * y1 / h, "stipple")
     # 종이 낟알 — 흰 · 검은 잔 점을 살짝 얹는다.
     g = ((noise[1] + noise[2]) * 0.5) ** 1.3 * 2.0 - 1.0
     strength = (grain_overlay * np.abs(g)) ** 0.8 * 0.5
@@ -386,7 +485,14 @@ def oil_paint(ctx, rgba, level):
     return _to_image(out * 255.0)
 
 
-EFFECTS = {"pixel": pixel_art, "sketch": pencil_sketch, "duotone": duotone, "halftone": halftone, "oil": oil_paint}
+EFFECTS = {
+    "pixel": pixel_art,
+    "sketch": pencil_sketch,
+    "duotone": duotone,
+    "halftone": halftone,
+    "stipple": ink_stipple,
+    "oil": oil_paint,
+}
 
 
 def photo_effect(ctx, inputs, settings):

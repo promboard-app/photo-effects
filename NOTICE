@@ -1,8 +1,43 @@
 Photo Effects (promboard.photo-effects)
 Copyright (c) 2026 PromBoard. Licensed under the MIT License (see LICENSE),
-except for the part listed below.
+except for the parts listed below.
 
-Halftone print effect (the `halftone` function and `HALFTONE_INKS` in nodes/main.py)
+Halftone print effect (the `halftone` function, `HALFTONE_SCREENS` and `_simplex2` in nodes/main.py)
+----------------------------------------------------------------------------------------------------
+This part is a NumPy port of glsl-halftone (index.glsl, version 1.0.4):
+  https://github.com/glslify/glsl-halftone
+glsl-halftone adapts Stefan Gustavson's WebGL halftone shader (public domain) and uses
+glsl-aastep (https://github.com/glslify/glsl-aastep, MIT, Copyright (c) 2015 stackgl) and the
+2D simplex noise from glsl-noise / Ashima Arts webgl-noise (https://github.com/hughsk/glsl-noise,
+https://github.com/ashima/webgl-noise, MIT).
+Changes from the original: GLSL rewritten in NumPy for still images; dot radius multiplied by
+sqrt(4/pi) ~ 1.128 so the dot area equals the ink amount; dot frequency set by cell
+count along the long side (150, 105, 70 for low, medium, high); the anti-aliasing width uses the
+analytic pixel step of the grid distance plus neighbor-pixel differences of ink and noise; the
+noise lattice hash is computed with integers.
+
+  glsl-halftone, glsl-aastep: Copyright (c) 2015 stackgl
+  Simplex noise: Copyright (C) 2011 Ashima Arts
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+  THE SOFTWARE.
+
+Ink stipple effect (the `ink_stipple` function and `STIPPLE_INKS` in nodes/main.py)
 ------------------------------------------------------------------------------------
 This part is a NumPy port of the "Halftone CMYK" shader from Paper Shaders
 (packages/shaders/src/shaders/halftone-cmyk.ts, commit 7002061d, Vintage preset):
@@ -10,8 +45,8 @@ This part is a NumPy port of the "Halftone CMYK" shader from Paper Shaders
 It is licensed under the Apache License, Version 2.0 (full text: LICENSE-APACHE).
 Changes from the original: GLSL rewritten in NumPy for still images; contrast 1.25 -> 1.1
 and ink amount raised to the power 0.85 so mid tones stay closer to the photo; dot size set
-by cell count along the long side; grain made from pixel-scaled value noise; dot profile
-precomputed as a lookup table; computed in row strips.
+by cell count along the long side (184, 160, 139 for low, medium, high); grain made from
+pixel-scaled value noise; dot profile precomputed as a lookup table; computed in row strips.
 
 Paper Shaders NOTICE:
   Powered by Paper Shaders:
