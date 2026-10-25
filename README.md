@@ -2,9 +2,9 @@
 
 PromBoard 커뮤니티 플러그인 예시입니다. 캔버스에 **사진 효과** 노드 하나를 더합니다. 사진을 이으면 고른 효과를 입혀 PNG 로 내보냅니다.
 
-![같은 공원 사진을 여섯 조각으로 나눠 원본과 효과 다섯 가지(세기 보통)를 나란히 보인 그림](docs/ko/hero.jpg)
+![같은 공원 사진을 일곱 조각으로 나눠 원본과 효과 여섯 가지(세기 보통)를 나란히 보인 그림](docs/ko/hero.jpg)
 
-한 장의 사진을 세로 여섯 조각으로 나눠, 맨 왼쪽은 원본 그대로 두고 나머지는 효과를 하나씩 입혔습니다(세기 보통).
+한 장의 사진을 세로 일곱 조각으로 나눠, 맨 왼쪽은 원본 그대로 두고 나머지는 효과를 하나씩 입혔습니다(세기 보통).
 
 - 플러그인 id: `promboard.photo-effects`
 - AI 모델을 받지 않습니다. 그래픽카드 없이 CPU 로 돕니다(파이썬 Pillow · numpy).
@@ -21,11 +21,11 @@ PromBoard 커뮤니티 플러그인 예시입니다. 캔버스에 **사진 효�
 | 잉크 점묘 | 오래된 잡지 인쇄처럼 바랜 잉크 색 점 | 점 크기(조금씩) |
 | 유화 | 붓으로 칠한 듯한 색 덩어리 | 붓 터치 크기 |
 
-![효과 다섯 가지를 약하게 · 보통 · 강하게로 입힌 결과를 얼굴 쪽만 잘라 견준 표](docs/ko/strength.jpg)
+![효과 여섯 가지를 약하게 · 보통 · 강하게로 입힌 결과를 얼굴 쪽만 잘라 견준 표](docs/ko/strength.jpg)
 
-노드 위 손잡이를 끌면 원본과 결과를 나란히 견줘 볼 수 있습니다. 아래 움짤은 손잡이를 끌 때처럼 왼쪽은 원본, 오른쪽은 효과를 입힌 결과로 나눠 보여 줍니다. 효과는 픽셀아트 → 연필 스케치 → 듀오톤 → 망점 인쇄 → 유화 차례로 바뀝니다(세기 보통).
+노드 위 손잡이를 끌면 원본과 결과를 나란히 견줘 볼 수 있습니다. 아래 움짤은 손잡이를 끌 때처럼 왼쪽은 원본, 오른쪽은 효과를 입힌 결과로 나눠 보여 줍니다. 효과는 픽셀아트 → 연필 스케치 → 듀오톤 → 망점 인쇄 → 잉크 점묘 → 유화 차례로 바뀝니다(세기 보통).
 
-![책상 사진에서 손잡이를 좌우로 끌며 원본과 효과 다섯 가지를 차례로 견주는 움짤](docs/compare.gif)
+![책상 사진에서 손잡이를 좌우로 끌며 원본과 효과 여섯 가지를 차례로 견주는 움짤](docs/compare.gif)
 
 예시 사진은 GPT Image 2.5 로 만든 사진(Ultralytics YOLO 예시 플러그인의 예제 사진과 같음)이고, 결과는 이 저장소의 `nodes/main.py` 를 그대로 돌려 얻었습니다.
 
@@ -61,9 +61,9 @@ docs/scripts/            위 그림을 nodes/main.py 로 다시 만드는 스크
 
 A PromBoard community plugin example. It adds one **Photo Effect** node to the canvas: connect a photo and it outputs a PNG with the chosen effect.
 
-![One park photo cut into six strips: the original and the five effects at medium strength](docs/en/hero.jpg)
+![One park photo cut into seven strips: the original and the six effects at medium strength](docs/en/hero.jpg)
 
-One photo cut into six vertical strips: the leftmost strip is the original, the others each have one effect applied (medium strength).
+One photo cut into seven vertical strips: the leftmost strip is the original, the others each have one effect applied (medium strength).
 
 - Plugin id: `promboard.photo-effects`
 - No AI model download. Runs on the CPU without a graphics card (Python Pillow + numpy).
@@ -78,11 +78,11 @@ One photo cut into six vertical strips: the leftmost strip is the original, the 
 | Ink stipple (잉크 점묘) | old-magazine dots in faded ink colors | dot size (small steps) |
 | Oil paint (유화) | painterly color patches | brush size |
 
-![The five effects at low, medium and high strength, cropped to the faces](docs/en/strength.jpg)
+![The six effects at low, medium and high strength, cropped to the faces](docs/en/strength.jpg)
 
-Drag the handle on the node to compare the original and the result. The animation below splits the picture the same way: original on the left, result on the right, going through Pixel art → Pencil sketch → Duotone → Halftone print → Oil paint (medium strength).
+Drag the handle on the node to compare the original and the result. The animation below splits the picture the same way: original on the left, result on the right, going through Pixel art → Pencil sketch → Duotone → Halftone print → Ink stipple → Oil paint (medium strength).
 
-![Dragging a handle across a desk photo to compare the original with each of the five effects](docs/compare.gif)
+![Dragging a handle across a desk photo to compare the original with each of the six effects](docs/compare.gif)
 
 The example photos were made with GPT Image 2.5 (the same photos as in the Ultralytics YOLO example plugin). The results come from running this repository's `nodes/main.py` as is; `docs/scripts/` rebuilds every picture: `python docs/scripts/make_results.py <work dir> && python docs/scripts/make_visuals.py <work dir> docs en` (repository root, a Python with the lock-file packages, ffmpeg and the Pretendard font).
 

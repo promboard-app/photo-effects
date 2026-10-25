@@ -5,6 +5,7 @@
 언어별 그림(hero.jpg · strength.jpg)은 docs/<언어>/ 에, 글자 없는 움짤(compare.gif)은 두 언어가 같이 쓰도록 docs/ 에 쓴다.
 움짤은 언어와 상관없으니 한 번만 만들면 된다.
 """
+import json
 import math
 import os
 import sys
@@ -14,19 +15,22 @@ from PIL import Image, ImageDraw
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import common as C  # noqa: E402
 
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 work, docs, lang = sys.argv[1:4]
 fx_dir = os.path.join(work, "fx")
 photo_dir = os.path.join(work, "photos")
 out = os.path.join(docs, lang)
 os.makedirs(out, exist_ok=True)
 
-EFFECTS = ["pixel", "sketch", "duotone", "halftone", "oil"]
+#: 효과 차례 · 한국어 이름은 manifest.json 의 알약 그대로(효과를 더하거나 빼면 따라간다). 영어 이름은 README 영어판과 같게.
+_settings = {s["id"]: s for s in json.load(open(os.path.join(ROOT, "manifest.json"), encoding="utf-8"))["nodes"][0]["settings"]}
+EFFECTS = [o["value"] for o in _settings["effect"]["options"]]
 NAMES = {
-    "ko": {"original": "원본", "pixel": "픽셀아트", "sketch": "연필 스케치", "duotone": "듀오톤", "halftone": "망점 인쇄",
-           "oil": "유화", "low": "약하게", "medium": "보통", "high": "강하게", "strength": "세기"},
+    "ko": {"original": "원본", "strength": "세기",
+           **{o["value"]: o["label"] for o in _settings["effect"]["options"] + _settings["strength"]["options"]}},
     "en": {"original": "Original", "pixel": "Pixel art", "sketch": "Pencil sketch", "duotone": "Duotone",
-           "halftone": "Halftone print", "oil": "Oil paint", "low": "Low", "medium": "Medium", "high": "High",
-           "strength": "Strength"},
+           "halftone": "Halftone print", "stipple": "Ink stipple", "oil": "Oil paint", "low": "Low", "medium": "Medium",
+           "high": "High", "strength": "Strength"},
 }[lang]
 
 
@@ -38,28 +42,28 @@ def orig(photo):
     return Image.open(os.path.join(photo_dir, f"{photo}.jpg")).convert("RGB")
 
 
-# ── 대표 그림: 공원 사진 한 장을 여섯 조각으로(원본 + 효과 다섯, 세기 보통) ─────────────
+# ── 대표 그림: 공원 사진 한 장을 세로 조각으로(원본 + 효과마다 한 조각, 세기 보통) ─────────────
 def hero():
     src = orig("park")
     imgs = [src] + [res("park", e) for e in EFFECTS]
     names = ["original"] + EFFECTS
     y0, y1 = 96, 96 + 864  # 16:9 로 자른다
-    strip = src.width // 6
+    strip = src.width // len(imgs)
     gap, pad = 6, 24
-    canvas = Image.new("RGB", (src.width + gap * 5 + pad * 2, (y1 - y0) + pad * 2), C.BG)
+    canvas = Image.new("RGB", (strip * len(imgs) + gap * (len(imgs) - 1) + pad * 2, (y1 - y0) + pad * 2), C.BG)
     for i, (im, n) in enumerate(zip(imgs, names)):
         part = im.crop((i * strip, y0, (i + 1) * strip, y1))
-        part = C.label_on_image(part, NAMES[n], size=24, pos="mb", margin=20, active=(n != "original"))
+        part = C.label_on_image(part, NAMES[n], size=21, pos="mb", margin=18, active=(n != "original"))
         canvas.paste(part, (pad + i * (strip + gap), pad))
     canvas.save(os.path.join(out, "hero.jpg"), quality=88, optimize=True, progressive=True)
 
 
-# ── 세기 비교: 효과 5 × 약하게 · 보통 · 강하게(두 친구 사진의 얼굴 쪽) ─────────────────
+# ── 세기 비교: 효과마다 약하게 · 보통 · 강하게(두 친구 사진의 얼굴 쪽) ─────────────────
 def strength():
     box = (150, 120, 870, 600)  # friends.jpg 두 얼굴과 윗몸
     tw, th, label_w = 420, 280, 190
     gap, pad, head = 12, 24, 60
-    canvas = Image.new("RGB", (pad * 2 + label_w + tw * 3 + gap * 2, pad + head + th * 5 + gap * 4 + pad), C.BG)
+    canvas = Image.new("RGB", (pad * 2 + label_w + tw * 3 + gap * 2, pad + head + th * len(EFFECTS) + gap * (len(EFFECTS) - 1) + pad), C.BG)
     d = ImageDraw.Draw(canvas)
     d.text((pad, pad + 10), NAMES["strength"], font=C.font(22, "Regular"), fill=C.MUTED)
     for j, s in enumerate(["low", "medium", "high"]):
